@@ -50,7 +50,7 @@ topic是发布消息和订阅消息的名称，一个topic可以有多个用户�
 Kafka Streams通过构建Kafka生产者和消费者API，简化程序开发，并利用Kafka本身的功能提供数据的并行性、分布式协调、容错和操作简便性。
 
 以下是使用Kafka Streams API的应用程序的解剖结构。它提供了包含多个流程的Kafka Streams应用程序的逻辑视图，每个线程包含多个流任务。
-![../_images/streams-architecture-overview.jpg](https://docs.confluent.io/current/_images/streams-architecture-overview.jpg)
+![../_images/streams-architecture-overview.jpg](file:///D:/idea.png)
 
 ### Processor Topology
 
@@ -83,5 +83,5 @@ Kafka Streams允许用户配置用于并行化处理的线程数。每个线程�
 Kafka Streams提供状态存储，Streams处理程序可以使用它来存储和查询数据，这是实现有状态存储的一项重要功能。
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDA0NjI1MjA4XX0=
+eyJoaXN0b3J5IjpbLTExMTUzNzI1NjcsNDA0NjI1MjA4XX0=
 -->
