@@ -69,8 +69,18 @@ val distData = sc.parallelize(data)
 
 ### 基础
 
-### 传递Functions（函数）
+### 传递Functions（函数）给Spark
+
+### 与Key-Value Pairs一起使用
+
+### Transformations（转换）
+
+### Action（动作）
+
+### Shuffle操作
+
+#### Backgou
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTgwNjQzNzM4NSw4MzA3ODUyODEsLTgzOT
+eyJoaXN0b3J5IjpbLTUwMDM5NTE3MSw4MzA3ODUyODEsLTgzOT
 Y0OTA2MF19
 -->
