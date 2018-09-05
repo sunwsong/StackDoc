@@ -79,8 +79,20 @@ val distData = sc.parallelize(data)
 
 ### Shuffle操作
 
-#### Backgou
+#### Background（幕后）
+
+#### 性能影响
+
+## RDD Persistence（持久化）
+
+### 存储级别
+### 删除数据
+
+# 共享变量
+
+## 广播变量
+##
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTUwMDM5NTE3MSw4MzA3ODUyODEsLTgzOT
+eyJoaXN0b3J5IjpbMjAwOTYxOTQ4Miw4MzA3ODUyODEsLTgzOT
 Y0OTA2MF19
 -->
