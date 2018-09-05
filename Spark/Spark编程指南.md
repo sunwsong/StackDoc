@@ -62,6 +62,15 @@ val distData = sc.parallelize(data)
 在创建后，该 distributed dataset（分布式数据集）（`distData`）可以并行的执行操作。例如，我们可以调用  `distData.reduce((a, b) => a + b`) 来合计数组中的元素。后面我们将介绍 distributed dataset（分布式数据集）上的操作。
 
 并行集合中一个很重要参数是  _partitions_（分区）的数量，它可用来切割 dataset（数据集）。Spark 将在集群中的每一个分区上运行一个任务。通常您希望群集中的每一个 CPU 计算 2-4 个分区。一般情况下，Spark 会尝试根据您的群集情况来自动的设置的分区的数量。当然，您也可以将分区数作为第二个参数传递到  `parallelize`  (e.g.  `sc.parallelize(data, 10)`) 方法中来手动的设置它。注意: 代码中的一些地方会使用 term slices (a synonym for partitions) 以保持向后兼容.
+
+## 外部Datasets（数据集）
+
+## RDD操作
+
+### 基础
+
+### 传递Functions（函数）
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODMwNzg1MjgxLC04Mzk2NDkwNjBdfQ==
+eyJoaXN0b3J5IjpbMTgwNjQzNzM4NSw4MzA3ODUyODEsLTgzOT
+Y0OTA2MF19
 -->
