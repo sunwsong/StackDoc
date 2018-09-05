@@ -6,6 +6,35 @@
 
 # Spark依赖
 
+Spark 2.2.0 默认使用 Scala 2.11 来构建和发布直到运行。（当然，Spark 也可以与其它的 Scala 版本一起运行）。为了使用 Scala 编写应用程序，您需要使用可兼容的 Scala 版本（例如，2.11.X）。
+
+要编写一个 Spark 的应用程序，您需要在 Spark 上添加一个 Maven 依赖。Spark 可以通过 Maven 中央仓库获取:
+
+```
+groupId = org.apache.spark
+artifactId = spark-core_2.11
+version = 2.2.0
+```
+
+此外，如果您想访问一个 HDFS 集群，则需要针对您的 HDFS 版本添加一个  `hadoop-client`（hadoop 客户端）依赖。
+
+```
+groupId = org.apache.hadoop
+artifactId = hadoop-client
+version = <your-hdfs-version>
+```
+
+最后，您需要导入一些 Spark classes（类）到您的程序中去。添加下面几行:
+
+```scala
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkConf
+```
+
+(在 Spark 1.3.0 之前，您需要明确导入  `org.apache.spark.SparkContext._`  来启用必要的的隐式转换。)
+
+# 初始化Spark
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5Mjc5NjU5ODQsLTgzOTY0OTA2MF19
+eyJoaXN0b3J5IjpbLTY2MjQ5Mzk4MywtODM5NjQ5MDYwXX0=
 -->
