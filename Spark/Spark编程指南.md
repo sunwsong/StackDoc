@@ -97,6 +97,12 @@ distFile: org.apache.spark.rdd.RDD[String] = data.txt MapPartitionsRDD[10] at te
 
 ## RDD操作
 
+RDDs support 两种类型的操作:  _transformations（转换）_, 它会在一个已存在的 dataset 上创建一个新的 dataset, 和  _actions（动作）_, 将在 dataset 上运行的计算后返回到 driver 程序. 例如,  `map`  是一个通过让每个数据集元素都执行一个函数，并返回的新 RDD 结果的 transformation,  `reduce`  reduce 通过执行一些函数，聚合 RDD 中所有元素，并将最终结果给返回驱动程序（虽然也有一个并行  `reduceByKey`  返回一个分布式数据集）的 action.
+
+Spark 中所有的 transformations 都是  _lazy（懒加载的）_, 因此它不会立刻计算出结果. 相反, 他们只记得应用于一些基本数据集的转换 (例如. 文件). 只有当需要返回结果给驱动程序时，transformations 才开始计算. 这种设计使 Spark 的运行更高效. 例如, 我们可以了解到，`map`  所创建的数据集将被用在  `reduce`  中，并且只有  `reduce`  的计算结果返回给驱动程序，而不是映射一个更大的数据集.
+
+默认情况下，每次你在 RDD 运行一个 action 的时， 每个 transformed RDD 都会被重新计算。但是，您也可用  `persist`  (或  `cache`) 方法将 RDD persist（持久化）到内存中；在这种情况下，Spark 为了下次查询时可以更快地访问，会把数据保存在集群上。此外，还支持持续持久化 RDDs 到磁盘，或复制到多个结点。
+
 ### 基础
 
 ### 传递Functions（函数）给Spark
@@ -127,6 +133,6 @@ distFile: org.apache.spark.rdd.RDD[String] = data.txt MapPartitionsRDD[10] at te
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzU4MTYwMTkwLDgzMDc4NTI4MSwtODM5Nj
-Q5MDYwXX0=
+eyJoaXN0b3J5IjpbLTEwMTI3NTc0MjcsMzU4MTYwMTkwLDgzMD
+c4NTI4MSwtODM5NjQ5MDYwXX0=
 -->
