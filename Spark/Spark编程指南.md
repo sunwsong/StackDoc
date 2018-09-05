@@ -187,7 +187,89 @@ val counts = pairs.reduceByKey((a, b) => a + b)
 
 ### Transformations（转换）
 
+下表列出了一些 Spark 常用的 transformations（转换）. 详情请参考 RDD API 文档 ([Scala](http://spark.apachecn.org/docs/cn/2.2.0/api/scala/index.html#org.apache.spark.rdd.RDD),  [Java](http://spark.apachecn.org/docs/cn/2.2.0/api/java/index.html?org/apache/spark/api/java/JavaRDD.html),[Python](http://spark.apachecn.org/docs/cn/2.2.0/api/python/pyspark.html#pyspark.RDD),  [R](http://spark.apachecn.org/docs/cn/2.2.0/api/R/index.html)) 和 pair RDD 函数文档 ([Scala](http://spark.apachecn.org/docs/cn/2.2.0/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions),  [Java](http://spark.apachecn.org/docs/cn/2.2.0/api/java/index.html?org/apache/spark/api/java/JavaPairRDD.html)).
 
+Transformation（转换）|Meaning（含义）|
+--|--|
+map(_func_)|返回一个新的 distributed dataset（分布式数据集），它由每个 source（数据源）中的元素应用一个函数  _func_  来生成.|
+
+**filter**(_func_)
+
+返回一个新的 distributed dataset（分布式数据集），它由每个 source（数据源）中应用一个函数  _func_  且返回值为 true 的元素来生成.
+
+**flatMap**(_func_)
+
+与 map 类似，但是每一个输入的 item 可以被映射成 0 个或多个输出的 items（所以  _func_  应该返回一个 Seq 而不是一个单独的 item）.
+
+**mapPartitions**(_func_)
+
+与 map 类似，但是单独的运行在在每个 RDD 的 partition（分区，block）上，所以在一个类型为 T 的 RDD 上运行时  _func_  必须是 Iterator<T> => Iterator<U> 类型.
+
+**mapPartitionsWithIndex**(_func_)
+
+与 mapPartitions 类似，但是也需要提供一个代表 partition 的 index（索引）的 interger value（整型值）作为参数的  _func_，所以在一个类型为 T 的 RDD 上运行时  _func_  必须是 (Int, Iterator<T>) => Iterator<U> 类型.
+
+**sample**(_withReplacement_,  _fraction_,  _seed_)
+
+样本数据，设置是否放回（withReplacement）, 采样的百分比（_fraction_）、使用指定的随机数生成器的种子（seed）.
+
+**union**(_otherDataset_)
+
+反回一个新的 dataset，它包含了 source dataset（源数据集）和 otherDataset（其它数据集）的并集.
+
+**intersection**(_otherDataset_)
+
+返回一个新的 RDD，它包含了 source dataset（源数据集）和 otherDataset（其它数据集）的交集.
+
+**distinct**([_numTasks_]))
+
+返回一个新的 dataset，它包含了 source dataset（源数据集）中去重的元素.
+
+**groupByKey**([_numTasks_])
+
+在一个 (K, V) pair 的 dataset 上调用时，返回一个 (K, Iterable<V>) .  
+**Note:**  如果分组是为了在每一个 key 上执行聚合操作（例如，sum 或 average)，此时使用  `reduceByKey`  或  `aggregateByKey`  来计算性能会更好.  
+**Note:**  默认情况下，并行度取决于父 RDD 的分区数。可以传递一个可选的  `numTasks`参数来设置不同的任务数.
+
+**reduceByKey**(_func_, [_numTasks_])
+
+在 (K, V) pairs 的 dataset 上调用时, 返回 dataset of (K, V) pairs 的 dataset, 其中的 values 是针对每个 key 使用给定的函数  _func_来进行聚合的, 它必须是 type (V,V) => V 的类型. 像  `groupByKey`  一样, reduce tasks 的数量是可以通过第二个可选的参数来配置的.
+
+**aggregateByKey**(_zeroValue_)(_seqOp_,  _combOp_, [_numTasks_])
+
+在 (K, V) pairs 的 dataset 上调用时, 返回 (K, U) pairs 的 dataset，其中的 values 是针对每个 key 使用给定的 combine 函数以及一个 neutral "0" 值来进行聚合的. 允许聚合值的类型与输入值的类型不一样, 同时避免不必要的配置. 像  `groupByKey`  一样, reduce tasks 的数量是可以通过第二个可选的参数来配置的.
+
+**sortByKey**([_ascending_], [_numTasks_])
+
+在一个 (K, V) pair 的 dataset 上调用时，其中的 K 实现了 Ordered，返回一个按 keys 升序或降序的 (K, V) pairs 的 dataset, 由 boolean 类型的  `ascending`  参数来指定.
+
+**join**(_otherDataset_, [_numTasks_])
+
+在一个 (K, V) 和 (K, W) 类型的 dataset 上调用时，返回一个 (K, (V, W)) pairs 的 dataset，它拥有每个 key 中所有的元素对。Outer joins 可以通过  `leftOuterJoin`,  `rightOuterJoin`  和  `fullOuterJoin`  来实现.
+
+**cogroup**(_otherDataset_, [_numTasks_])
+
+在一个 (K, V) 和的 dataset 上调用时，返回一个 (K, (Iterable<V>, Iterable<W>)) tuples 的 dataset. 这个操作也调用了  `groupWith`.
+
+**cartesian**(_otherDataset_)
+
+在一个 T 和 U 类型的 dataset 上调用时，返回一个 (T, U) pairs 类型的 dataset（所有元素的 pairs，即笛卡尔积）.
+
+**pipe**(_command_,  _[envVars]_)
+
+通过使用 shell 命令来将每个 RDD 的分区给 Pipe。例如，一个 Perl 或 bash 脚本。RDD 的元素会被写入进程的标准输入（stdin），并且 lines（行）输出到它的标准输出（stdout）被作为一个字符串型 RDD 的 string 返回.
+
+**coalesce**(_numPartitions_)
+
+Decrease（降低）RDD 中 partitions（分区）的数量为 numPartitions。对于执行过滤后一个大的 dataset 操作是更有效的.
+
+**repartition**(_numPartitions_)
+
+Reshuffle（重新洗牌）RDD 中的数据以创建或者更多的 partitions（分区）并将每个分区中的数据尽量保持均匀. 该操作总是通过网络来 shuffles 所有的数据.
+
+**repartitionAndSortWithinPartitions**(_partitioner_)
+
+根据给定的 partitioner（分区器）对 RDD 进行重新分区，并在每个结果分区中，按照 key 值对记录排序。这比每一个分区中先调用  `repartition`  然后再 sorting（排序）效率更高，因为它可以将排序过程推送到 shuffle 操作的机器上进行.
 
 ### Action（动作）
 
@@ -211,6 +293,6 @@ val counts = pairs.reduceByKey((a, b) => a + b)
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDY2MTg4Nzk0LC0xMDEyNzU3NDI3LDM1OD
-E2MDE5MCw4MzA3ODUyODEsLTgzOTY0OTA2MF19
+eyJoaXN0b3J5IjpbLTEyNzAzMzY1NzMsLTEwMTI3NTc0MjcsMz
+U4MTYwMTkwLDgzMDc4NTI4MSwtODM5NjQ5MDYwXX0=
 -->
