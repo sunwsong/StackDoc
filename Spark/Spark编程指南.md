@@ -45,6 +45,10 @@ new SparkContext(conf)
 ```
 
 这个  `appName`  参数是一个在集群 UI 上展示应用程序的名称。  `master`  是一个  [Spark, Mesos 或 YARN 的 cluster URL](http://spark.apachecn.org/docs/cn/2.2.0/submitting-applications.html#master-urls)，或者指定为在 local mode（本地模式）中运行的 “local” 字符串。在实际工作中，当在集群上运行时，您不希望在程序中将 master 给硬编码，而是用  [使用  `spark-submit`  启动应用](http://spark.apachecn.org/docs/cn/2.2.0/submitting-applications.html)  并且接收它。然而，对于本地测试和单元测试，您可以通过 “local” 来运行 Spark 进程。
+
+# 弹性分布式数据集（RDDs）
+
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA4MjI2ODQ5MSwtODM5NjQ5MDYwXX0=
+eyJoaXN0b3J5IjpbMTE0MTU5NjM4NiwtODM5NjQ5MDYwXX0=
 -->
