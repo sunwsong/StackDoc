@@ -65,7 +65,7 @@ val distData = sc.parallelize(data)
 
 ## 外部Datasets（数据集）
 
-Spark 可以从 Hadoop 所支持的任何存储源中创建 distributed dataset（分布式数据集），包括本地文件系统，HDFS，Cassandra，HBase，[Amazon S3](http://wiki.apache.org/hadoop/AmazonS3)  等等。 Spark 支持文本文件，[SequenceFiles](http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/mapred/SequenceFileInputFormat.html)，以及任何其它的 Hadoop  [InputFormat](http://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapred/InputFormat.html)。
+Spark 可以从 Hadoop 所支持的任何存储源中创建 distributed dataset（分布式数据集），包括本地文件系统，HDFS，Cassandra，HBase，Amazon S3  等等。 Spark 支持文本文件，SequenceFiles，以及任何其它的 Hadoop  `InputFormat`。
 
 可以使用  `SparkContext`  的  `textFile`  方法来创建文本文件的 RDD。此方法需要一个文件的 URI（计算机上的本地路径 ，`hdfs://`，`s3n://`  等等的 URI），并且读取它们作为一个 lines（行）的集合。下面是一个调用示例:
 
@@ -127,6 +127,6 @@ distFile: org.apache.spark.rdd.RDD[String] = data.txt MapPartitionsRDD[10] at te
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTE0OTk4Mjk0Niw4MzA3ODUyODEsLTgzOT
-Y0OTA2MF19
+eyJoaXN0b3J5IjpbLTExMjM5MTc2MzksODMwNzg1MjgxLC04Mz
+k2NDkwNjBdfQ==
 -->
