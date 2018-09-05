@@ -273,18 +273,161 @@ Reshuffle（重新洗牌）RDD 中的数据以创建或者更多的 partitions�
 
 ### Action（动作）
 
+下表列出了一些 Spark 常用的 actions 操作。详细请参考 RDD API 文档 ([Scala](http://spark.apachecn.org/docs/cn/2.2.0/api/scala/index.html#org.apache.spark.rdd.RDD),[Java](http://spark.apachecn.org/docs/cn/2.2.0/api/java/index.html?org/apache/spark/api/java/JavaRDD.html),  [Python](http://spark.apachecn.org/docs/cn/2.2.0/api/python/pyspark.html#pyspark.RDD),  [R](http://spark.apachecn.org/docs/cn/2.2.0/api/R/index.html))
+
+和 pair RDD 函数文档 ([Scala](http://spark.apachecn.org/docs/cn/2.2.0/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions),  [Java](http://spark.apachecn.org/docs/cn/2.2.0/api/java/index.html?org/apache/spark/api/java/JavaPairRDD.html)).
+
+Action（动作）
+
+Meaning（含义）
+
+**reduce**(_func_)
+
+使用函数  _func_  聚合 dataset 中的元素，这个函数  _func_  输入为两个元素，返回为一个元素。这个函数应该是可交换（commutative ）和关联（associative）的，这样才能保证它可以被并行地正确计算.
+
+**collect**()
+
+在 driver 程序中，以一个 array 数组的形式返回 dataset 的所有元素。这在过滤器（filter）或其他操作（other operation）之后返回足够小（sufficiently small）的数据子集通常是有用的.
+
+**count**()
+
+返回 dataset 中元素的个数.
+
+**first**()
+
+返回 dataset 中的第一个元素（类似于 take(1).
+
+**take**(_n_)
+
+将数据集中的前  _n_  个元素作为一个 array 数组返回.
+
+**takeSample**(_withReplacement_,  _num_, [_seed_])
+
+对一个 dataset 进行随机抽样，返回一个包含  _num_  个随机抽样（random sample）元素的数组，参数 withReplacement 指定是否有放回抽样，参数 seed 指定生成随机数的种子.
+
+**takeOrdered**(_n_,  _[ordering]_)
+
+返回 RDD 按自然顺序（natural order）或自定义比较器（custom comparator）排序后的前  _n_  个元素.
+
+**saveAsTextFile**(_path_)
+
+将 dataset 中的元素以文本文件（或文本文件集合）的形式写入本地文件系统、HDFS 或其它 Hadoop 支持的文件系统中的给定目录中。Spark 将对每个元素调用 toString 方法，将数据元素转换为文本文件中的一行记录.
+
+**saveAsSequenceFile**(_path_)  
+(Java and Scala)
+
+将 dataset 中的元素以 Hadoop SequenceFile 的形式写入到本地文件系统、HDFS 或其它 Hadoop 支持的文件系统指定的路径中。该操作可以在实现了 Hadoop 的 Writable 接口的键值对（key-value pairs）的 RDD 上使用。在 Scala 中，它还可以隐式转换为 Writable 的类型（Spark 包括了基本类型的转换，例如 Int, Double, String 等等).
+
+**saveAsObjectFile**(_path_)  
+(Java and Scala)
+
+使用 Java 序列化（serialization）以简单的格式（simple format）编写数据集的元素，然后使用  `SparkContext.objectFile()`  进行加载.
+
+**countByKey**()
+
+仅适用于（K,V）类型的 RDD 。返回具有每个 key 的计数的 （K , Int）pairs 的 hashmap.
+
+**foreach**(_func_)
+
+对 dataset 中每个元素运行函数  _func_  。这通常用于副作用（side effects），例如更新一个  [Accumulator](http://spark.apachecn.org/docs/cn/2.2.0/rdd-programming-guide.html#accumulators)（累加器）或与外部存储系统（external storage systems）进行交互。**Note**：修改除  `foreach()`之外的累加器以外的变量（variables）可能会导致未定义的行为（undefined behavior）。详细介绍请阅读  [Understanding closures（理解闭包）](http://spark.apachecn.org/docs/cn/2.2.0/rdd-programming-guide.html#understanding-closures-a-nameclosureslinka)  部分.
+
+该 Spark RDD API 还暴露了一些 actions（操作）的异步版本，例如针对  `foreach`的  `foreachAsync`，它们会立即返回一个`FutureAction`  到调用者，而不是在完成 action 时阻塞。 这可以用于管理或等待 action 的异步执行。.
+
 ### Shuffle操作
+
+Spark 里的某些操作会触发 shuffle。shuffle 是spark 重新分配数据的一种机制，使得这些数据可以跨不同的区域进行分组。这通常涉及在 executors 和 机器之间拷贝数据，这使得 shuffle 成为一个复杂的、代价高的操作。
 
 #### Background（幕后）
 
+为了明白  [`reduceByKey`](http://spark.apachecn.org/docs/cn/2.2.0/rdd-programming-guide.html#ReduceByLink)  操作的过程，我们以  `reduceByKey`  为例。reduceBykey 操作产生一个新的 RDD，其中 key 所有相同的的值组合成为一个 tuple - key 以及与 key 相关联的所有值在 reduce 函数上的执行结果。面临的挑战是，一个 key 的所有值不一定都在一个同一个 paritition 分区里，甚至是不一定在同一台机器里，但是它们必须共同被计算。
+
+在 spark 里，特定的操作需要数据不跨分区分布。在计算期间，一个任务在一个分区上执行，为了所有数据都在单个  `reduceByKey`  的 reduce 任务上运行，我们需要执行一个 all-to-all 操作。它必须从所有分区读取所有的 key 和 key对应的所有的值，并且跨分区聚集去计算每个 key 的结果 - 这个过程就叫做  **shuffle**.。
+
+尽管每个分区新 shuffle 的数据集将是确定的，分区本身的顺序也是这样，但是这些数据的顺序是不确定的。如果希望 shuffle 后的数据是有序的，可以使用:
+
+-   `mapPartitions`  对每个 partition 分区进行排序，例如,  `.sorted`
+-   `repartitionAndSortWithinPartitions`  在分区的同时对分区进行高效的排序.
+-   `sortBy`  对 RDD 进行全局的排序
+
+触发的 shuffle 操作包括  **repartition**  操作，如  [`repartition`](http://spark.apachecn.org/docs/cn/2.2.0/rdd-programming-guide.html#RepartitionLink)  和  [`coalesce`](http://spark.apachecn.org/docs/cn/2.2.0/rdd-programming-guide.html#CoalesceLink),  **‘ByKey**操作 (除了 counting 之外) 像  [`groupByKey`](http://spark.apachecn.org/docs/cn/2.2.0/rdd-programming-guide.html#GroupByLink)  和  [`reduceByKey`](http://spark.apachecn.org/docs/cn/2.2.0/rdd-programming-guide.html#ReduceByLink), 和  **join**  操作, 像  [`cogroup`](http://spark.apachecn.org/docs/cn/2.2.0/rdd-programming-guide.html#CogroupLink)  和  [`join`](http://spark.apachecn.org/docs/cn/2.2.0/rdd-programming-guide.html#JoinLink).
+
 #### 性能影响
+
+该  **Shuffle**  是一个代价比较高的操作，它涉及磁盘 I/O、数据序列化、网络 I/O。为了准备 shuffle 操作的数据，Spark 启动了一系列的任务，_map_  任务组织数据，_reduce_  完成数据的聚合。这些术语来自 MapReduce，跟 Spark 的  `map`  操作和  `reduce`  操作没有关系。
+
+在内部，一个 map 任务的所有结果数据会保存在内存，直到内存不能全部存储为止。然后，这些数据将基于目标分区进行排序并写入一个单独的文件中。在 reduce 时，任务将读取相关的已排序的数据块。
+
+某些 shuffle 操作会大量消耗堆内存空间，因为 shuffle 操作在数据转换前后，需要在使用内存中的数据结构对数据进行组织。需要特别说明的是，`reduceByKey`  和  `aggregateByKey`  在 map 时会创建这些数据结构，`'ByKey`  操作在 reduce 时创建这些数据结构。当内存满的时候，Spark 会把溢出的数据存到磁盘上，这将导致额外的磁盘 I/O 开销和垃圾回收开销的增加。
+
+shuffle 操作还会在磁盘上生成大量的中间文件。在 Spark 1.3 中，这些文件将会保留至对应的 RDD 不在使用并被垃圾回收为止。这么做的好处是，如果在 Spark 重新计算 RDD 的血统关系（lineage）时，shuffle 操作产生的这些中间文件不需要重新创建。如果 Spark 应用长期保持对 RDD 的引用，或者垃圾回收不频繁，这将导致垃圾回收的周期比较长。这意味着，长期运行 Spark 任务可能会消耗大量的磁盘空间。临时数据存储路径可以通过 SparkContext 中设置参数  `spark.local.dir`  进行配置。
+
+shuffle 操作的行为可以通过调节多个参数进行设置。详细的说明请看  [Spark 配置指南](http://spark.apachecn.org/docs/cn/2.2.0/configuration.html)  中的 “Shuffle 行为” 部分。
 
 ## RDD Persistence（持久化）
 
+Spark 中一个很重要的能力是将数据  _persisting_  持久化（或称为  _caching_  缓存），在多个操作间都可以访问这些持久化的数据。当持久化一个 RDD 时，每个节点的其它分区都可以使用 RDD 在内存中进行计算，在该数据上的其他 action 操作将直接使用内存中的数据。这样会让以后的 action 操作计算速度加快（通常运行速度会加速 10 倍）。缓存是迭代算法和快速的交互式使用的重要工具。
+
+RDD 可以使用  `persist()`  方法或  `cache()`  方法进行持久化。数据将会在第一次 action 操作时进行计算，并缓存在节点的内存中。Spark 的缓存具有容错机制，如果一个缓存的 RDD 的某个分区丢失了，Spark 将按照原来的计算过程，自动重新计算并进行缓存。
+
+另外，每个持久化的 RDD 可以使用不同的  _storage level_  存储级别进行缓存，例如，持久化到磁盘、已序列化的 Java 对象形式持久化到内存（可以节省空间）、跨节点间复制、以 off-heap 的方式存储在 Tachyon。这些存储级别通过传递一个  `StorageLevel`  对象 ([Scala](http://spark.apachecn.org/docs/cn/2.2.0/api/scala/index.html#org.apache.spark.storage.StorageLevel),  [Java](http://spark.apachecn.org/docs/cn/2.2.0/api/java/index.html?org/apache/spark/storage/StorageLevel.html),  [Python](http://spark.apachecn.org/docs/cn/2.2.0/api/python/pyspark.html#pyspark.StorageLevel)) 给  `persist()`  方法进行设置。`cache()`方法是使用默认存储级别的快捷设置方法，默认的存储级别是  `StorageLevel.MEMORY_ONLY`（将反序列化的对象存储到内存中）。详细的存储级别介绍如下:
+
+Storage Level（存储级别）
+
+Meaning（含义）
+
+MEMORY_ONLY
+
+将 RDD 以反序列化的 Java 对象的形式存储在 JVM 中. 如果内存空间不够，部分数据分区将不再缓存，在每次需要用到这些数据时重新进行计算. 这是默认的级别.
+
+MEMORY_AND_DISK
+
+将 RDD 以反序列化的 Java 对象的形式存储在 JVM 中。如果内存空间不够，将未缓存的数据分区存储到磁盘，在需要使用这些分区时从磁盘读取.
+
+MEMORY_ONLY_SER  
+(Java and Scala)
+
+将 RDD 以序列化的 Java 对象的形式进行存储（每个分区为一个 byte 数组）。这种方式会比反序列化对象的方式节省很多空间，尤其是在使用  [fast serializer](http://spark.apachecn.org/docs/cn/2.2.0/tuning.html)  时会节省更多的空间，但是在读取时会增加 CPU 的计算负担.
+
+MEMORY_AND_DISK_SER  
+(Java and Scala)
+
+类似于 MEMORY_ONLY_SER ，但是溢出的分区会存储到磁盘，而不是在用到它们时重新计算.
+
+DISK_ONLY
+
+只在磁盘上缓存 RDD.
+
+MEMORY_ONLY_2, MEMORY_AND_DISK_2, etc.
+
+与上面的级别功能相同，只不过每个分区在集群中两个节点上建立副本.
+
+OFF_HEAP (experimental 实验性)
+
+类似于 MEMORY_ONLY_SER, 但是将数据存储在  [off-heap memory](http://spark.apachecn.org/docs/cn/2.2.0/configuration.html#memory-management)  中. 这需要启用 off-heap 内存.
+
+**Note:**  _在 Python 中, stored objects will 总是使用  [Pickle](https://docs.python.org/2/library/pickle.html)  library 来序列化对象, 所以无论你选择序列化级别都没关系. 在 Python 中可用的存储级别有  `MEMORY_ONLY`,  `MEMORY_ONLY_2`,  `MEMORY_AND_DISK`,  `MEMORY_AND_DISK_2`,  `DISK_ONLY`, 和  `DISK_ONLY_2`._
+
+在 shuffle 操作中（例如  `reduceByKey`），即便是用户没有调用  `persist`  方法，Spark 也会自动缓存部分中间数据.这么做的目的是，在 shuffle 的过程中某个节点运行失败时，不需要重新计算所有的输入数据。如果用户想多次使用某个 RDD，强烈推荐在该 RDD 上调用 persist 方法.
+
 ### 存储级别
+
+Spark 的存储级别的选择，核心问题是在 memory 内存使用率和 CPU 效率之间进行权衡。建议按下面的过程进行存储级别的选择:
+
+-   如果您的 RDD 适合于默认存储级别 (`MEMORY_ONLY`), leave them that way. 这是CPU效率最高的选项，允许RDD上的操作尽可能快地运行.
+    
+-   如果不是, 试着使用  `MEMORY_ONLY_SER`  和  [selecting a fast serialization library](http://spark.apachecn.org/docs/cn/2.2.0/tuning.html)以使对象更加节省空间，但仍然能够快速访问。 (Java和Scala)
+    
+-   不要溢出到磁盘，除非计算您的数据集的函数是昂贵的, 或者它们过滤大量的数据. 否则, 重新计算分区可能与从磁盘读取分区一样快.
+    
+-   如果需要快速故障恢复，请使用复制的存储级别 (e.g. 如果使用Spark来服务 来自网络应用程序的请求).  _All_  存储级别通过重新计算丢失的数据来提供完整的容错能力，但复制的数据可让您继续在 RDD 上运行任务，而无需等待重新计算一个丢失的分区.
+
 ### 删除数据
 
+Spark 会自动监视每个节点上的缓存使用情况，并使用 least-recently-used（LRU）的方式来丢弃旧数据分区。 如果您想手动删除 RDD 而不是等待它掉出缓存，使用 `RDD.unpersist()` 方法。
+
 # 共享变量
+
+通常情况下，一个传递给 Spark 操作（例如 `map` 或 `reduce`）的函数 func 是在远程的集群节点上执行的。该函数 func 在多个节点执行过程中使用的变量，是同一个变量的多个副本。这些变量的以副本的方式拷贝到每个机器上，并且各个远程机器上变量的更新并不会传播回 driver program（驱动程序）。通用且支持 read-write（读-写） 的共享变量在任务间是不能胜任的。所以，Spark 提供了两种特定类型的共享变量 : broadcast variables（广播变量）和 accumulators（累加器）。
 
 ## 广播变量
 ## Accumulators（累加器）
@@ -293,6 +436,7 @@ Reshuffle（重新洗牌）RDD 中的数据以创建或者更多的 partitions�
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyNzAzMzY1NzMsLTEwMTI3NTc0MjcsMz
-U4MTYwMTkwLDgzMDc4NTI4MSwtODM5NjQ5MDYwXX0=
+eyJoaXN0b3J5IjpbMjAyNjk5MTI1NCwtMTI3MDMzNjU3MywtMT
+AxMjc1NzQyNywzNTgxNjAxOTAsODMwNzg1MjgxLC04Mzk2NDkw
+NjBdfQ==
 -->
