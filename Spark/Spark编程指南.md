@@ -105,11 +105,89 @@ Spark 中所有的 transformations 都是  _lazy（懒加载的）_, 因此它�
 
 ### 基础
 
+为了说明 RDD 基础，请思考下面这个的简单程序:
+
+```scala
+val lines = sc.textFile("data.txt")
+val lineLengths = lines.map(s => s.length)
+val totalLength = lineLengths.reduce((a, b) => a + b)
+```
+
+第一行从外部文件中定义了一个基本的 RDD，但这个数据集并未加载到内存中或即将被行动:  `line`仅仅是一个类似指针的东西，指向该文件. 第二行定义了  `lineLengths`  作为  `map`  transformation 的结果。请注意，由于  `laziness`（延迟加载）`lineLengths`  不会被立即计算. 最后，我们运行  `reduce`，这是一个 action。此时，Spark 分发计算任务到不同的机器上运行，每台机器都运行在 map 的一部分并本地运行 reduce，仅仅返回它聚合后的结果给驱动程序.
+
+如果我们也希望以后再次使用  `lineLengths`，我们还可以添加:
+
+```scala
+lineLengths.persist()
+```
+
+在  `reduce`  之前，这将导致  `lineLengths`  在第一次计算之后就被保存在 memory 中。
+
 ### 传递Functions（函数）给Spark
+
+当 driver 程序在集群上运行时，Spark 的 API 在很大程度上依赖于传递函数。有 2 种推荐的方式来做到这一点:
+
+-   [Anonymous function syntax（匿名函数语法）](http://docs.scala-lang.org/tutorials/tour/anonymous-function-syntax.html), 它可以用于短的代码片断.
+-   在全局单例对象中的静态方法. 例如, 您可以定义  `object MyFunctions`  然后传递  `MyFunctions.func1`, 如下:
+
+```scala
+object MyFunctions {
+  def func1(s: String): String = { ... }
+}
+
+myRdd.map(MyFunctions.func1)
+```
+
+请注意，虽然也有可能传递一个类的实例（与单例对象相反）的方法的引用，这需要发送整个对象，包括类中其它方法。例如，考虑:
+
+```scala
+class MyClass {
+  def func1(s: String): String = { ... }
+  def doStuff(rdd: RDD[String]): RDD[String] = { rdd.map(func1) }
+}
+```
+
+这里，如果我们创建一个  `MyClass`  的实例，并调用  `doStuff`，在  `map`  内有  `MyClass`  实例的  `func1`  方法的引用，所以整个对象需要被发送到集群的。它类似于  `rdd.map(x => this.func1(x))`
+
+类似的方式，访问外部对象的字段将引用整个对象:
+
+```scala
+class MyClass {
+  val field = "Hello"
+  def doStuff(rdd: RDD[String]): RDD[String] = { rdd.map(x => field + x) }
+}
+```
+
+相当于写  `rdd.map(x => this.field + x)`, 它引用  `this`  所有的东西. 为了避免这个问题, 最简单的方式是复制  `field`  到一个本地变量，而不是外部访问它:
+
+```scala
+def doStuff(rdd: RDD[String]): RDD[String] = {
+  val field_ = this.field
+  rdd.map(x => field_ + x)
+}
+```
 
 ### 与Key-Value Pairs一起使用
 
+虽然大多数 Spark 操作工作在包含任何类型对象的 RDDs 上，只有少数特殊的操作可用于 Key-Value 对的 RDDs. 最常见的是分布式 “shuffle” 操作，如通过元素的 key 来进行 grouping 或 aggregating 操作.
+
+在 Scala 中，这些操作在 RDD 上是自动可用，它包含了  [Tuple2](http://www.scala-lang.org/api/2.11.8/index.html#scala.Tuple2)  objects (the built-in tuples in the language, created by simply writing  `(a, b)`). 在  [PairRDDFunctions](http://spark.apachecn.org/docs/cn/2.2.0/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions)  class 中该 key-value pair 操作是可用的, 其中围绕 tuple 的 RDD 进行自动封装.
+
+例如，下面的代码使用的  `Key-Value`  对的  `reduceByKey`  操作统计文本文件中每一行出现了多少次:
+
+```scala
+val lines = sc.textFile("data.txt")
+val pairs = lines.map(s => (s, 1))
+val counts = pairs.reduceByKey((a, b) => a + b)
+```
+
+我们也可以使用  `counts.sortByKey()`  ，例如，在对按字母顺序排序，最后  `counts.collect()`  把他们作为一个数据对象返回给 driver 程序。
+
+**Note（注意）:**  当在 key-value pair 操作中使用自定义的 objects 作为 key 时, 您必须确保有一个自定义的  `equals()`  方法有一个  `hashCode()`  方法相匹配. 有关详情, 请参阅  [Object.hashCode() documentation](http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html#hashCode())  中列出的约定.
+
 ### Transformations（转换）
+
+
 
 ### Action（动作）
 
@@ -133,6 +211,6 @@ Spark 中所有的 transformations 都是  _lazy（懒加载的）_, 因此它�
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwMTI3NTc0MjcsMzU4MTYwMTkwLDgzMD
-c4NTI4MSwtODM5NjQ5MDYwXX0=
+eyJoaXN0b3J5IjpbNDY2MTg4Nzk0LC0xMDEyNzU3NDI3LDM1OD
+E2MDE5MCw4MzA3ODUyODEsLTgzOTY0OTA2MF19
 -->
