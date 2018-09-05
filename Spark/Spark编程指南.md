@@ -89,7 +89,7 @@ distFile: org.apache.spark.rdd.RDD[String] = data.txt MapPartitionsRDD[10] at te
 
 -   `SparkContext.wholeTextFiles`  可以读取包含多个小文本文件的目录, 并且将它们作为一个 (filename, content) pairs 来返回. 这与  `textFile`  相比, 它的每一个文件中的每一行将返回一个记录. 分区由数据量来确定, 某些情况下, 可能导致分区太少. 针对这些情况,  `wholeTextFiles`  在第二个位置提供了一个可选的参数用户控制分区的最小数量.
     
--   针对  [SequenceFiles](http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/mapred/SequenceFileInputFormat.html), 使用 SparkContext 的  `sequenceFile[K, V]`  方法，其中  `K`  和  `V`  指的是文件中 key 和 values 的类型. 这些应该是 Hadoop 的  [Writable](http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/io/Writable.html)  接口的子类, 像  [IntWritable](http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/io/IntWritable.html)  and  [Text](http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/io/Text.html). 此外, Spark 可以让您为一些常见的 Writables 指定原生类型; 例如,  `sequenceFile[Int, String]`  会自动读取 IntWritables 和 Texts.
+-   针对  SequenceFiles, 使用 SparkContext 的  `sequenceFile[K, V]`  方法，其中  `K`  和  `V`  指的是文件中 key 和 values 的类型. 这些应该是 Hadoop 的  `Writable`  接口的子类, 像 `IntWritable` and `Text`. 此外, Spark 可以让您为一些常见的 Writables 指定原生类型; 例如,  `sequenceFile[Int, String]`  会自动读取 IntWritables 和 Texts.
     
 -   针对其它的 Hadoop InputFormats, 您可以使用  `SparkContext.hadoopRDD`  方法, 它接受一个任意的  `JobConf`  和 input format class, key class 和 value class. 通过相同的方法你可以设置你的 input source（输入源）. 你还可以针对 InputFormats 使用基于 “new” MapReduce API (`org.apache.hadoop.mapreduce`) 的  `SparkContext.newAPIHadoopRDD`.
     
@@ -127,6 +127,6 @@ distFile: org.apache.spark.rdd.RDD[String] = data.txt MapPartitionsRDD[10] at te
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTExMjM5MTc2MzksODMwNzg1MjgxLC04Mz
-k2NDkwNjBdfQ==
+eyJoaXN0b3J5IjpbMzU4MTYwMTkwLDgzMDc4NTI4MSwtODM5Nj
+Q5MDYwXX0=
 -->
