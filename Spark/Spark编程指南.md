@@ -65,6 +65,36 @@ val distData = sc.parallelize(data)
 
 ## 外部Datasets（数据集）
 
+Spark 可以从 Hadoop 所支持的任何存储源中创建 distributed dataset（分布式数据集），包括本地文件系统，HDFS，Cassandra，HBase，[Amazon S3](http://wiki.apache.org/hadoop/AmazonS3)  等等。 Spark 支持文本文件，[SequenceFiles](http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/mapred/SequenceFileInputFormat.html)，以及任何其它的 Hadoop  [InputFormat](http://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapred/InputFormat.html)。
+
+可以使用  `SparkContext`  的  `textFile`  方法来创建文本文件的 RDD。此方法需要一个文件的 URI（计算机上的本地路径 ，`hdfs://`，`s3n://`  等等的 URI），并且读取它们作为一个 lines（行）的集合。下面是一个调用示例:
+
+```scala
+scala> val distFile = sc.textFile("data.txt")
+distFile: org.apache.spark.rdd.RDD[String] = data.txt MapPartitionsRDD[10] at textFile at <console>:26
+```
+
+在创建后，`distFile`  可以使用 dataset（数据集）的操作。例如，我们可以使用下面的 map 和 reduce 操作来合计所有行的数量:  `distFile.map(s => s.length).reduce((a, b) => a + b)`。
+
+使用 Spark 读取文件时需要注意:
+
+-   如果使用本地文件系统的路径，所工作节点的相同访问路径下该文件必须可以访问。复制文件到所有工作节点上，或着使用共享的网络挂载文件系统。
+    
+-   所有 Spark 基于文件的 input 方法, 包括  `textFile`, 支持在目录上运行, 压缩文件, 和通配符. 例如, 您可以使用  `textFile("/my/directory")`,  `textFile("/my/directory/*.txt")`, and  `textFile("/my/directory/*.gz")`.
+    
+-   `textFile`  方法也可以通过第二个可选的参数来控制该文件的分区数量. 默认情况下, Spark 为文件的每一个 block（块）创建的一 个 partition 分区（HDFS 中块大小默认是 128MB），当然你也可以通过传递一个较大的值来要求一个较高的分区数量。请注意，分区的数量不能够小于块的数量。
+    
+
+除了文本文件之外，Spark 的 Scala API 也支持一些其它的数据格式:
+
+-   `SparkContext.wholeTextFiles`  可以读取包含多个小文本文件的目录, 并且将它们作为一个 (filename, content) pairs 来返回. 这与  `textFile`  相比, 它的每一个文件中的每一行将返回一个记录. 分区由数据量来确定, 某些情况下, 可能导致分区太少. 针对这些情况,  `wholeTextFiles`  在第二个位置提供了一个可选的参数用户控制分区的最小数量.
+    
+-   针对  [SequenceFiles](http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/mapred/SequenceFileInputFormat.html), 使用 SparkContext 的  `sequenceFile[K, V]`  方法，其中  `K`  和  `V`  指的是文件中 key 和 values 的类型. 这些应该是 Hadoop 的  [Writable](http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/io/Writable.html)  接口的子类, 像  [IntWritable](http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/io/IntWritable.html)  and  [Text](http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/io/Text.html). 此外, Spark 可以让您为一些常见的 Writables 指定原生类型; 例如,  `sequenceFile[Int, String]`  会自动读取 IntWritables 和 Texts.
+    
+-   针对其它的 Hadoop InputFormats, 您可以使用  `SparkContext.hadoopRDD`  方法, 它接受一个任意的  `JobConf`  和 input format class, key class 和 value class. 通过相同的方法你可以设置你的 input source（输入源）. 你还可以针对 InputFormats 使用基于 “new” MapReduce API (`org.apache.hadoop.mapreduce`) 的  `SparkContext.newAPIHadoopRDD`.
+    
+-   `RDD.saveAsObjectFile`  和  `SparkContext.objectFile`  支持使用简单的序列化的 Java objects 来保存 RDD. 虽然这不像 Avro 这种专用的格式一样高效，但其提供了一种更简单的方式来保存任何的 RDD。
+
 ## RDD操作
 
 ### 基础
@@ -91,8 +121,12 @@ val distData = sc.parallelize(data)
 # 共享变量
 
 ## 广播变量
-##
+## Accumulators（累加器）
+
+# 布署应用到集群中
+
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjAwOTYxOTQ4Miw4MzA3ODUyODEsLTgzOT
+eyJoaXN0b3J5IjpbMTE0OTk4Mjk0Niw4MzA3ODUyODEsLTgzOT
 Y0OTA2MF19
 -->
