@@ -330,7 +330,7 @@ class ShuffleDependency[K: ClassTag, V: ClassTag, C: ClassTag](
 
 **_writePartitionToCheckpointFile: 把 RDD 一个 Partition 文件里面的数据写到一个 Checkpoint 文件里面_**
 
-```
+``` scala
   def writePartitionToCheckpointFile[T: ClassTag](
       path: String,
       broadcastedConf: Broadcast[SerializableConfiguration],
@@ -390,7 +390,7 @@ class ShuffleDependency[K: ClassTag, V: ClassTag, C: ClassTag](
 
 **_writeRDDToCheckpointDirectoryWrite，将一个 RDD 写入到多个 checkpoint 文件，并返回一个 ReliableCheckpointRDD 来代表这个 RDD_**
 
-```
+``` scala
  def writeRDDToCheckpointDirectory[T: ClassTag](
       originalRDD: RDD[T],
       checkpointDir: String,
@@ -430,13 +430,13 @@ class ShuffleDependency[K: ClassTag, V: ClassTag, C: ClassTag](
 
 **_RDD checkpoint 之后得到了一个新的 RDD，那么 child RDD 如何知道 parent RDD 有没有被 checkpoint 过呢？ 看 RDD 的源码，我们可以发现：_**
 
-```
+``` scala
 private var dependencies_ : Seq[Dependency[_]] = null
 ```
 
 dependencies_ 用来存放 checkpoint 后的结果的，如为 null，则就判断没 checkpoint：
 
-```
+``` scala
  final def dependencies: Seq[Dependency[_]] = {
     checkpointRDD.map(r => List(new OneToOneDependency(r))).getOrElse {
       if (dependencies_ == null) {
@@ -447,5 +447,5 @@ dependencies_ 用来存放 checkpoint 后的结果的，如为 null，则就判�
   }
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTE2MTQxMzk3LDE5MjQyMTk1MjldfQ==
+eyJoaXN0b3J5IjpbLTEwMzI4MzI0MzksMTkyNDIxOTUyOV19
 -->
