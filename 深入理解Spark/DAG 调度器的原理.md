@@ -23,7 +23,7 @@
 
 我们先来看一来在 SparkContext 中是如何创建它们的：
 
-```
+``` scala
   val (sched, ts) = SparkContext.createTaskScheduler(this, master, deployMode)
     _schedulerBackend = sched
     _taskScheduler = ts
@@ -815,5 +815,5 @@ TaskSet 保存了 Stage 包含的一组完全相同的 Task，每个 Task 的处
 
 开始讲起，深入理解 TaskScheduler 的工作过程。
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTMyNjE1Mjg0Nl19
+eyJoaXN0b3J5IjpbMjcyNzE5OTEyLDEzMjYxNTI4NDZdfQ==
 -->
