@@ -279,7 +279,7 @@ class RangeDependency[T](rdd: RDD[T], inStart: Int, outStart: Int, length: Int)
 
 **_ShuffleDependency，需要进行 shuffle_**
 
-```
+``` scala
 class ShuffleDependency[K: ClassTag, V: ClassTag, C: ClassTag](
     @transient private val _rdd: RDD[_ <: Product2[K, V]],
     val partitioner: Partitioner,
@@ -312,11 +312,11 @@ class ShuffleDependency[K: ClassTag, V: ClassTag, C: ClassTag](
 
 通过 RDD 接口，Spark 只需要不超过 20 行代码实现便可以实现大多数转换。5.1 小节给出了例子，然后我们讨论了怎样使用 RDD 接口进行调度（5.2），最后讨论一下基于 RDD 的程序何时需要数据检查点操作（5.3）。
 
-## <a></a>5.2 Spark 任务调度器
+## 5.2 Spark 任务调度器
 
 可见：[http://blog.csdn.net/u011239443/article/details/53911902](http://blog.csdn.net/u011239443/article/details/53911902)
 
-## <a></a>5.3 检查点
+## 5.3 检查点
 
 尽管 RDD 中的 Lineage 信息可以用来故障恢复，但对于那些 Lineage 链较长的 RDD 来说，这种恢复可能很耗时。例如 4.3 小节中的 Pregel 任务，每次迭代的顶点状态和消息都跟前一次迭代有关，所以 Lineage 链很长。如果将 Lineage 链存到物理存储中，再定期对 RDD 执行检查点操作就很有效。
 
@@ -447,5 +447,5 @@ dependencies_ 用来存放 checkpoint 后的结果的，如为 null，则就判�
   }
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTkyNDIxOTUyOV19
+eyJoaXN0b3J5IjpbMTE2MTQxMzk3LDE5MjQyMTk1MjldfQ==
 -->
