@@ -1,8 +1,6 @@
-> 本文由 [简悦 SimpRead](http://ksria.com/simpread/) 转码， 原文地址 https://blog.csdn.net/u011239443/article/details/53911902 版权声明：本文为博主原创文章，转载请附上原文地址。 https://blog.csdn.net/u011239443/article/details/53911902
-
 上一篇[《深入理解 Spark 2.0 （一）：RDD 实现及源码分析 》](http://blog.csdn.net/u011239443/article/details/53894611)的 5.2 Spark 任务调度器我们省略过去了，这篇我们就来讲讲 Spark 的调度器。
 
-# <a></a>概述
+# 概述
 
 上一篇《深入理解 Spark（一）：RDD 实现及源码分析 》提到：
 
@@ -816,10 +814,6 @@ TaskSet 保存了 Stage 包含的一组完全相同的 Task，每个 Task 的处
 ```
 
 开始讲起，深入理解 TaskScheduler 的工作过程。
-
-![](https://img-blog.csdn.net/20170625152617464?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMTIzOTQ0Mw==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
-
-<link rel="stylesheet" href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css">
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwNTQ2MDM5ODVdfQ==
+eyJoaXN0b3J5IjpbMTMyNjE1Mjg0Nl19
 -->
