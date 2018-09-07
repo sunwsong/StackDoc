@@ -230,7 +230,7 @@ ReduceByKey 操作在 mapper 节点上执行部分聚集，与 MapReduce 的 com
 
 抽象类 Dependency：
 
-```
+``` scala
 abstract class Dependency[T] extends Serializable {
   def rdd: RDD[T]
 }
@@ -240,7 +240,7 @@ abstract class Dependency[T] extends Serializable {
 
 **_NarrowDependency 也是一个抽象类，它实现了 getParents 重写了 rdd 函数，它有两个子类，一个是 OneToOneDependency，一个是 RangeDependency_**
 
-```
+``` scala
 abstract class NarrowDependency[T](_rdd: RDD[T]) extends Dependency[T] {
   /**
    * Get the parent partitions for a child partition.
@@ -255,7 +255,7 @@ abstract class NarrowDependency[T](_rdd: RDD[T]) extends Dependency[T] {
 
 **_OneToOneDependency，可以看到 getParents 实现很简单，就是传进一个 partitionId: Int，再把 partitionId 放在 List 里面传出去，即去 parent RDD 中取与该 RDD 相同 partitionID 的数据_**
 
-```
+``` scala
 class OneToOneDependency[T](rdd: RDD[T]) extends NarrowDependency[T](rdd) {
   override def getParents(partitionId: Int): List[Int] = List(partitionId)
 }
@@ -263,7 +263,7 @@ class OneToOneDependency[T](rdd: RDD[T]) extends NarrowDependency[T](rdd) {
 
 **_RangeDependency，用于 union。与上面不同的是，这里我们要算出该位置，设某个 parent RDD 从 inStart 开始的 partition，逐个生成了 child RDD 从 outStart 开始的 partition，则计算方式为： partitionId - outStart + inStart_**
 
-```
+``` scala
 class RangeDependency[T](rdd: RDD[T], inStart: Int, outStart: Int, length: Int)
   extends NarrowDependency[T](rdd) {
 
@@ -447,5 +447,5 @@ dependencies_ 用来存放 checkpoint 后的结果的，如为 null，则就判�
   }
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTM1NDU4MzI1M119
+eyJoaXN0b3J5IjpbMTkyNDIxOTUyOV19
 -->
