@@ -315,11 +315,11 @@ Spark 的 Stage 调用是从最后一个 RDD 所在的 Stage，ResultStage 开�
   }
 ```
 
-## <a></a>DAGScheduler.getParentStagesAndId
+## DAGScheduler.getParentStagesAndId
 
 getParentStagesAndId 中得到了 ParentStages 以及其 StageId：
 
-```
+``` scala
   private def getParentStagesAndId(rdd: RDD[_], firstJobId: Int): (List[Stage], Int) = {
     val parentStages = getParentStages(rdd, firstJobId)
     val id = nextStageId.getAndIncrement()
@@ -327,11 +327,11 @@ getParentStagesAndId 中得到了 ParentStages 以及其 StageId：
   }
 ```
 
-## <a></a>DAGScheduler.getParentStages
+## DAGScheduler.getParentStages
 
 我们再来深入看看 getParentStages 做了什么：
 
-```
+``` scala
  private def getParentStages(rdd: RDD[_], firstJobId: Int): List[Stage] = {
     //将存储ParentStages
     val parents = new HashSet[Stage]
@@ -373,18 +373,18 @@ getParentStagesAndId 中得到了 ParentStages 以及其 StageId：
 
 若 parent RDD 和 child RDD 为宽依赖，则 parent RDD 将纳入一新的 Stage 中。如图，F 被纳入了 Stage2 中。
 
-## <a></a>DAGScheduler.getShuffleMapStage
+## DAGScheduler.getShuffleMapStage
 
 下面我们来看下 getShuffleMapStage 是如何生成新的 Stage 的。
 首先 shuffleToMapStage 中保存了关于 Stage 的 HashMap
 
-```
+``` scala
 private[scheduler] val shuffleToMapStage = new HashMap[Int, ShuffleMapStage]
 ```
 
 getShuffleMapStage 会先去根据 shuffleId 去查找 shuffleToMapStage
 
-```
+``` scala
   private def getShuffleMapStage(
       shuffleDep: ShuffleDependency[_, _, _],
       firstJobId: Int): ShuffleMapStage = {
@@ -411,11 +411,11 @@ getShuffleMapStage 会先去根据 shuffleId 去查找 shuffleToMapStage
 
 可以发现这部分的代码和上述的 newResultStage 部分很像，所以可以看成一种递归的方法。
 
-## <a></a>DAGScheduler.getAncestorShuffleDependencies
+## DAGScheduler.getAncestorShuffleDependencies
 
 我们再来看下 getAncestorShuffleDependencies，可想而知，它应该会和 newResultStage 中的 getParentStages 会非常类似：
 
-```
+``` scala
   private def getAncestorShuffleDependencies(rdd: RDD[_]): Stack[ShuffleDependency[_, _, _]] = {
     val parents = new Stack[ShuffleDependency[_, _, _]]
     val visited = new HashSet[RDD[_]]
@@ -451,7 +451,7 @@ getShuffleMapStage 会先去根据 shuffleId 去查找 shuffleToMapStage
 那现在就来看 newOrUsedShuffleStage 是如何生成新的 Stage 的。
 首先 ShuffleMapTask 的计算结果（其实是计算结果数据所在的位置、大小等元数据信息）都会传给 Driver 的 mapOutputTracker。所以需要先判断 Stage 是否已经被计算过：
 
-```
+``` scala
   private def newOrUsedShuffleStage(
       shuffleDep: ShuffleDependency[_, _, _],
       firstJobId: Int): ShuffleMapStage = {
@@ -479,11 +479,11 @@ getShuffleMapStage 会先去根据 shuffleId 去查找 shuffleToMapStage
   }
 ```
 
-## <a></a>DAGScheduler.newShuffleMapStage
+## DAGScheduler.newShuffleMapStage
 
 递归就发生在 newShuffleMapStage，它的实现和最一开始的 newResultStage 类似，也是先 getParentStagesAndId，然后生成一个 ShuffleMapStage：
 
-```
+``` scala
   private def newShuffleMapStage(
       rdd: RDD[_],
       numTasks: Int,
@@ -500,7 +500,7 @@ getShuffleMapStage 会先去根据 shuffleId 去查找 shuffleToMapStage
   }
 ```
 
-## <a></a>回顾
+## 回顾
 
 到此，Stage 划分过程就结束了。我们在根据一开始的图，举例回顾下：
 ![](https://img-blog.csdn.net/20161228224317794?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMTIzOTQ0Mw==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
@@ -515,7 +515,7 @@ getShuffleMapStage 会先去根据 shuffleId 去查找 shuffleToMapStage
 *   `newOrUsedShuffleStage`生成新的 Stage 后，会判断 Stage 是否被计算过。若已经被计算过，就从`mapOutPutTracker`中复制计算结果。若没计算过，则向`mapOutPutTracker`注册占位。
 *   最后，回到`newResultStage`中，`new ResultStage`，这里即生成了`Stage3`。至此，`Stage`划分过程就结束了。
 
-# <a></a>生成任务
+# 生成任务
 
 调用栈如下：
 
@@ -526,11 +526,11 @@ getShuffleMapStage 会先去根据 shuffleId 去查找 shuffleToMapStage
         *   DAGScheduler.getMissingParentStages
         *   DAGScheduler.submitMissingTasks
 
-## <a></a>DAGScheduler.handleJobSubmitted
+## DAGScheduler.handleJobSubmitted
 
 我们再回过头来看 **_“提交 Job”_** 的最后一步 handleJobSubmitted：
 
-```
+``` scala
   private[scheduler] def handleJobSubmitted(jobId: Int,
       finalRDD: RDD[_],
       func: (TaskContext, Iterator[_]) => _,
@@ -815,6 +815,6 @@ TaskSet 保存了 Stage 包含的一组完全相同的 Task，每个 Task 的处
 
 开始讲起，深入理解 TaskScheduler 的工作过程。
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4MDc4MjM1OTYsMjcyNzE5OTEyLDEzMj
-YxNTI4NDZdfQ==
+eyJoaXN0b3J5IjpbLTIwNjg1MzAzNCwyNzI3MTk5MTIsMTMyNj
+E1Mjg0Nl19
 -->
