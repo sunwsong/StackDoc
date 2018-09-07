@@ -32,7 +32,7 @@
 
 可以看到，我们是先用函数 createTaskScheduler 创建了 taskScheduler，再 new 了一个 DAGScheduler。这个顺序可以改变吗？答案是否定的，我们看下 DAGScheduler 类就知道了：
 
-``` s'c
+``` scala
 class DAGScheduler(
     private[scheduler] val sc: SparkContext,
     private[scheduler] val taskScheduler: TaskScheduler,
@@ -62,7 +62,7 @@ class DAGScheduler(
 
 SparkContext 中创建的 TaskScheduler，会传入 DAGScheduler 赋值给它的成员变量，再 DAG 阶段结束后，使用它进行下一步对任务调度等的操作。
 
-# <a></a>提交 Job
+# 提交 Job
 
 调用栈如下：
 
@@ -80,19 +80,19 @@ SparkContext 中创建的 TaskScheduler，会传入 DAGScheduler 赋值给它的
 
 接下来，我们来逐个深入：
 
-## <a></a>rdd.count
+## rdd.count
 
 RDD 的一些 action 操作都会触发 SparkContext 的 runJob 函数，如 count()
 
-```
+``` scala
  def count(): Long = sc.runJob(this, Utils.getIteratorSize _).sum
 ```
 
-## <a></a>SparkContext.runJob
+## SparkContext.runJob
 
 SparkContext 的 runJob 会触发 DAGScheduler 的 runJob：
 
-```
+``` scala
 def runJob[T, U: ClassTag](
       rdd: RDD[T],
       func: (TaskContext, Iterator[T]) => U,
@@ -115,7 +115,7 @@ def runJob[T, U: ClassTag](
 
 这里的 rdd.doCheckpoint() 并不是对自己 Checkpoint，而是递归的回溯 parent rdd 检查 checkpointData 是否被定义了，若定义了就将该 rdd Checkpoint：
 
-```
+``` scala
  private[spark] def doCheckpoint(): Unit = {
     RDDOperationScope.withScope(sc, "checkpoint", allowNesting = false, ignoreParent = true) {
       if (!doCheckpointCalled) {
@@ -139,11 +139,11 @@ def runJob[T, U: ClassTag](
 
 具体的 checkpoint 实现可见上一篇博文。
 
-## <a></a>DAGScheduler.runJob
+## DAGScheduler.runJob
 
 DAGScheduler 的 runJob 会触发 DAGScheduler 的 submitJob：
 
-```
+``` scala 
 /**
    * 参数介绍：
    * @param rdd： 执行任务的目标TDD
@@ -178,11 +178,11 @@ DAGScheduler 的 runJob 会触发 DAGScheduler 的 submitJob：
   }
 ```
 
-## <a></a>DAGScheduler.submitJob
+## DAGScheduler.submitJob
 
 我们接下来看看 submitJob 里面做了什么：
 
-```
+``` scala
   def submitJob[T, U](
       rdd: RDD[T],
       func: (TaskContext, Iterator[T]) => U,
@@ -215,11 +215,11 @@ DAGScheduler 的 runJob 会触发 DAGScheduler 的 submitJob：
   }
 ```
 
-## <a></a>DAGSchedulerEventProcessLoop.doOnReceive
+## DAGSchedulerEventProcessLoop.doOnReceive
 
 eventProcessLoop 是一个 DAGSchedulerEventProcessLoop 类对象，即一个 DAG 调度事件处理的监听。eventProcessLoop 中调用 doOnReceive 来进行监听
 
-```
+``` scala
 private def doOnReceive(event: DAGSchedulerEvent): Unit = event match {
     //当事件为JobSubmitted时，
     //会调用DAGScheduler.handleJobSubmitted
@@ -233,7 +233,7 @@ private def doOnReceive(event: DAGSchedulerEvent): Unit = event match {
 
 自此 Job 的提交就完成了：
 
-```
+``` scala
   private[scheduler] def handleJobSubmitted(jobId: Int,
       finalRDD: RDD[_],
       func: (TaskContext, Iterator[_]) => _,
@@ -275,7 +275,7 @@ private def doOnReceive(event: DAGSchedulerEvent): Unit = event match {
 
 接下来我们来看看 handleJobSubmitted 中的 newResultStage，一个非常有趣的划分 Stage 过程。
 
-# <a></a>划分 Stage
+# 划分 Stage
 
 ![](https://img-blog.csdn.net/20161228224317794?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMTIzOTQ0Mw==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
@@ -296,11 +296,11 @@ private def doOnReceive(event: DAGSchedulerEvent): Unit = event match {
 
 接下来，我们来逐个深入：
 
-## <a></a>DAGScheduler.newResultStage
+## DAGScheduler.newResultStage
 
 Spark 的 Stage 调用是从最后一个 RDD 所在的 Stage，ResultStage 开始划分的，这里即为 G 所在的 Stage。但是在生成这个 Stage 之前会生成它的 parent Stage，就这样递归的把 parent Stage 都先生成了。
 
-```
+``` scala
   private def newResultStage(
       rdd: RDD[_],
       func: (TaskContext, Iterator[_]) => _,
@@ -815,6 +815,6 @@ TaskSet 保存了 Stage 包含的一组完全相同的 Task，每个 Task 的处
 
 开始讲起，深入理解 TaskScheduler 的工作过程。
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQ1MDMwOTk3NSwyNzI3MTk5MTIsMTMyNj
-E1Mjg0Nl19
+eyJoaXN0b3J5IjpbLTE4MDc4MjM1OTYsMjcyNzE5OTEyLDEzMj
+YxNTI4NDZdfQ==
 -->
