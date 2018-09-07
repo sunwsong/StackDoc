@@ -559,7 +559,7 @@ finalStage = newResultStage(finalRDD, func, partitions, jobId, callSite)
 
 接下来，我们继续往下看 handleJobSubmitted 的代码：
 
-```
+``` scala
     //生成新的job
     val job = new ActiveJob(jobId, finalStage, callSite, listener, properties)
     clearCacheLocs()
@@ -588,11 +588,11 @@ finalStage = newResultStage(finalRDD, func, partitions, jobId, callSite)
     submitWaitingStages()
 ```
 
-## <a></a>DAGScheduler.submitStage
+## DAGScheduler.submitStage
 
 接下来我们来看 Stage 是如何提交的。我们需要找到哪些 parent Stage 缺失，然后我们先运行生成这些 Stage。这是一个深度优先遍历的过程：
 
-```
+``` scala
   private def submitStage(stage: Stage) {
     val jobId = activeJobForStage(stage)
     if (jobId.isDefined) {
@@ -622,11 +622,11 @@ finalStage = newResultStage(finalRDD, func, partitions, jobId, callSite)
   }
 ```
 
-## <a></a>DAGScheduler.getMissingParentStages
+## DAGScheduler.getMissingParentStages
 
 getMissingParentStages 类似于 getParentStages，也是使用广度优先遍历：
 
-```
+``` scala
   private def getMissingParentStages(stage: Stage): List[Stage] = {
     val missing = new HashSet[Stage]
     val visited = new HashSet[RDD[_]]
@@ -663,11 +663,11 @@ getMissingParentStages 类似于 getParentStages，也是使用广度优先遍�
 
 ```
 
-## <a></a>DAGScheduler.submitMissingTasks
+## DAGScheduler.submitMissingTasks
 
 最后，我们来看下 DAGScheduler 最后的工作，提交 Task：
 
-```
+``` scala
 private def submitMissingTasks(stage: Stage, jobId: Int) {
     logDebug("submitMissingTasks(" + stage + ")")
     // pendingPartitions 是 HashSet[Int]
@@ -808,13 +808,13 @@ TaskSet 保存了 Stage 包含的一组完全相同的 Task，每个 Task 的处
 
 至此，DAGScheduler 就完成了它的任务了。接下来一篇博文，我们会从上述代码中的：
 
-```
+``` scala
       taskScheduler.submitTasks(new TaskSet(
         tasks.toArray, stage.id, stage.latestInfo.attemptId, jobId, properties))
 ```
 
 开始讲起，深入理解 TaskScheduler 的工作过程。
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwNjg1MzAzNCwyNzI3MTk5MTIsMTMyNj
-E1Mjg0Nl19
+eyJoaXN0b3J5IjpbMzg3ODA2MSwyNzI3MTk5MTIsMTMyNjE1Mj
+g0Nl19
 -->
