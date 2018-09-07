@@ -152,7 +152,7 @@ RDD 本身是静态类型对象，由参数指定其元素类型。例如，RDD[
 
 例如下面的程序是逻辑回归 [15] 的实现。逻辑回归是一种常见的分类算法，即寻找一个最佳分割两组点（即垃圾邮件和非垃圾邮件）的超平面 w。算法采用梯度下降的方法：开始时 w 为随机值，在每一次迭代的过程中，对 w 的函数求和，然后朝着优化的方向移动 w。
 
-```
+``` scala
 val points = spark.textFile(...)
      .map(parsePoint).persist()
 var w = // random initial vector
@@ -168,11 +168,11 @@ for (i <- 1 to ITERATIONS) {
 
 已经在 Spark 中实现的迭代式机器学习算法还有：kmeans（像逻辑回归一样每次迭代时执行一对 map 和 reduce 操作），期望最大化算法（EM，两个不同的 map/reduce 步骤交替执行），交替最小二乘矩阵分解和协同过滤算法。Chu 等人提出迭代式 MapReduce 也可以用来实现常用的学习算法 [11]。
 
-## <a></a>4.2 使用 RDD 实现 MapReduce
+## 4.2 使用 RDD 实现 MapReduce
 
 MapReduce 模型 [12] 很容易使用 RDD 进行描述。假设有一个输入数据集（其元素类型为 T），和两个函数 myMap: T => List[(Ki, Vi)] 和 myReduce: (Ki; List[Vi]) ) List[R]，代码如下：
 
-```
+``` scala
 data.flatMap(myMap)
     .groupByKey()
     .map((k, vs) => myReduce(k, vs))
@@ -180,7 +180,7 @@ data.flatMap(myMap)
 
 如果任务包含 combiner，则相应的代码为：
 
-```
+``` scala
 data.flatMap(myMap)
     .reduceByKey(myCombiner)
     .map((k, v) => myReduce(k, v))
@@ -188,19 +188,19 @@ data.flatMap(myMap)
 
 ReduceByKey 操作在 mapper 节点上执行部分聚集，与 MapReduce 的 combiner 类似。
 
-## <a></a>4.3 使用 RDD 实现 Pregel
+## 4.3 使用 RDD 实现 Pregel
 
 略
 
-## <a></a>4.4 使用 RDD 实现 HaLoop
+## 4.4 使用 RDD 实现 HaLoop
 
 略
 
-## <a></a>4.5 不适合使用 RDD 的应用
+## 4.5 不适合使用 RDD 的应用
 
 在 2.1 节我们讨论过，RDD 适用于具有批量转换需求的应用，并且相同的操作作用于数据集的每一个元素上。在这种情况下，RDD 能够记住每个转换操作，对应于 Lineage 图中的一个步骤，恢复丢失分区数据时不需要写日志记录大量数据。RDD 不适合那些通过异步细粒度地更新来共享状态的应用，例如 Web 应用中的存储系统，或者增量抓取和索引 Web 数据的系统，这样的应用更适合使用一些传统的方法，例如数据库、RAMCloud[26]、Percolator[27] 和 Piccolo[28]。我们的目标是，面向批量分析应用的这类特定系统，提供一种高效的编程模型，而不是一些异步应用程序。
 
-# <a></a>5\. RDD 的描述及作业调度
+# 5. RDD 的描述及作业调度
 
 我们希望在不修改调度器的前提下，支持 RDD 上的各种转换操作，同时能够从这些转换获取 Lineage 信息。为此，我们为 RDD 设计了一组小型通用的内部接口。
 
@@ -447,5 +447,5 @@ dependencies_ 用来存放 checkpoint 后的结果的，如为 null，则就判�
   }
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTYwMTIzMzg5Nl19
+eyJoaXN0b3J5IjpbMTM1NDU4MzI1M119
 -->
