@@ -32,7 +32,7 @@
 
 可以看到，我们是先用函数 createTaskScheduler 创建了 taskScheduler，再 new 了一个 DAGScheduler。这个顺序可以改变吗？答案是否定的，我们看下 DAGScheduler 类就知道了：
 
-```
+``` s'c
 class DAGScheduler(
     private[scheduler] val sc: SparkContext,
     private[scheduler] val taskScheduler: TaskScheduler,
@@ -815,5 +815,6 @@ TaskSet 保存了 Stage 包含的一组完全相同的 Task，每个 Task 的处
 
 开始讲起，深入理解 TaskScheduler 的工作过程。
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjcyNzE5OTEyLDEzMjYxNTI4NDZdfQ==
+eyJoaXN0b3J5IjpbMTQ1MDMwOTk3NSwyNzI3MTk5MTIsMTMyNj
+E1Mjg0Nl19
 -->
